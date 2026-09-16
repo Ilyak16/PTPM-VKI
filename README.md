@@ -147,9 +147,3 @@ except ZeroDivisionError as ex:
 
 ## 📚 Полезные ссылки и официальная документация
 * 📕 [Official Logging API Reference](https://docs.python.org/3/library/logging.html) — полный справочник по модулю `logging` (форматы строк, классы Handlers и настройки).
-
----
-
-
-
-
