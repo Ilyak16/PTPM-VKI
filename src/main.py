@@ -1,8 +1,3 @@
-import sys
-import os
-
-# Поддержка запуска из любой рабочей директории
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from converter import Converter
 
 

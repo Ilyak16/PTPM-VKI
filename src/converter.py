@@ -1,20 +1,14 @@
 import math
 
-
 class Converter:
-
     @staticmethod
     def do(x: float) -> int:
         if not isinstance(x, (int, float)):
             raise TypeError(f"Ожидалось число типа float или int, получено: {type(x).__name__}")
-
         if math.isnan(x):
             raise ValueError("Значение x не может быть NaN")
-
-        # Округляем до 1 знака после запятой для компенсации погрешностей двоичной арифметики float
         if not math.isinf(x):
             x = round(float(x), 1)
-
         if x >= 100.7:
             return 1000
         elif x > 0.0:
