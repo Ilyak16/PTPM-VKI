@@ -127,5 +127,5 @@ def main():
         logging.info("Приложение завершило работу")
 
 
-if __name__ == "__main__":
+while __name__ == "__main__":
     main()
