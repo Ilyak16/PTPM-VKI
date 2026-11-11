@@ -8,151 +8,84 @@ from src.database import DatabaseRepository
 
 class ForumParser:
     """
-    Класс для извлечения информации (парсинга) со страниц форумов и структурированных веб-ресурсов.
+    Парсер комментариев, оптимизированный под разметку 4PDA.
     """
 
-    DEFAULT_USER_AGENT = (
+    USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/124.0.0.0 Safari/537.36"
     )
 
-    def __init__(self, user_agent: Optional[str] = None, timeout: int = 10):
-        """
-        Инициализация парсера.
-
-        :param user_agent: Пользовательский User-Agent для сетевых запросов.
-        :param timeout: Таймаут для сетевых запросов в секундах.
-        """
-        self.headers = {
-            "User-Agent": user_agent or self.DEFAULT_USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
+    def __init__(self, timeout: int = 10):
+        self.headers = {"User-Agent": self.USER_AGENT}
         self.timeout = timeout
 
     def fetch_page(self, url: str) -> str:
         """
-        Выполняет HTTP-запрос к указанному URL с передачей заголовков и возвращает HTML-код.
-
-        :param url: URL-адрес страницы.
-        :return: HTML-содержимое страницы.
-        :raises requests.HTTPError: При ошибке HTTP-статуса (4xx, 5xx).
-        :raises requests.RequestException: При общих сетевых ошибках.
+        1. Отправка HTTP GET-запроса через библиотеку requests
+        с подменой User-Agent и правильным декодированием windows-1251.
         """
         response = requests.get(url, headers=self.headers, timeout=self.timeout)
         response.raise_for_status()
+        
+        # 4PDA использует кодировку windows-1251
+        if response.encoding and response.encoding.lower() in ("iso-8859-1", "utf-8"):
+            response.encoding = response.apparent_encoding or "windows-1251"
+            
         return response.text
 
     def parse_html(self, html_content: str) -> List[Dict[str, Any]]:
         """
-        Разбирает HTML-код и извлекает список комментариев/сообщений.
-
-        Поддерживает стандартную разметку форумов:
-        - Контейнеры постов: элементы с классами 'comment', 'post', 'forum-post', 'message-item'.
-        - ID: из атрибутов data-id, data-comment-id, id или ссылки.
-        - Автор: элементы с классами 'author', 'author-name', 'username', 'user-nickname'.
-        - Текст: элементы с классами 'comment-text', 'post-message', 'message-body', 'post-content'.
-
-        :param html_content: Исходный HTML-код страницы.
-        :return: Список словарей вида [{'id': int, 'name': str, 'message': str}, ...]
+        2. Поиск и извлечение комментариев из HTML через BeautifulSoup.
         """
         if not html_content or not html_content.strip():
             return []
 
-        try:
-            soup = BeautifulSoup(html_content, "lxml")
-        except Exception:
-            soup = BeautifulSoup(html_content, "html.parser")
+        soup = BeautifulSoup(html_content, "html.parser")
         results: List[Dict[str, Any]] = []
 
-        # Селекторы для поиска блоков сообщений
-        post_elements = soup.select(
-            ".comment, .post, .forum-post, .message-item, [data-comment-id], [data-id]"
+        # На 4PDA каждый блок комментария имеет атрибут id="comment-XXXXXX"
+        comment_blocks = soup.find_all(
+            lambda tag: tag.name == "div" and tag.has_attr("id") and re.match(r"^comment-\d+$", tag["id"])
         )
 
-        for element in post_elements:
-            # 1. Извлечение ID
-            comment_id = self._extract_id(element)
-            if comment_id is None:
+        for block in comment_blocks:
+            # Извлекаем ID (число из 'comment-10819774')
+            digits = re.findall(r"\d+", block["id"])
+            if not digits:
+                continue
+            comment_id = int(digits[0])
+
+            # Извлекаем логин автора (<span class="nickname">...</span>)
+            nickname_elem = block.select_one(".nickname")
+            if not nickname_elem:
+                continue
+            username = nickname_elem.get_text(strip=True)[:DatabaseRepository.MAX_NAME_LENGTH]
+
+            # Извлекаем текст комментария (<div class="content">...</div>)
+            content_elem = block.select_one(".content")
+            if not content_elem:
                 continue
 
-            # 2. Извлечение логина автора
-            author_name = self._extract_author(element)
-            if not author_name:
-                continue
+            # Сохраняем текст сообщения (включая HTML-разметку, например <br/>)
+            message_html = "".join(str(child) for child in content_elem.children).strip()
+            if not message_html:
+                message_html = content_elem.get_text(strip=True)
 
-            # 3. Извлечение текста сообщения (с сохранением внутренней HTML-разметки или в виде текста)
-            message_text = self._extract_message(element)
-            if not message_text:
-                continue
+            message_html = message_html[:DatabaseRepository.MAX_MESSAGE_LENGTH]
 
             results.append({
                 "id": comment_id,
-                "name": author_name,
-                "message": message_text
+                "name": username,
+                "message": message_html
             })
 
         return results
 
-    def _extract_id(self, element) -> Optional[int]:
-        """Вспомогательный метод для извлечения целочисленного ID поста."""
-        # 1. Проверяем атрибуты данных data-id и data-comment-id
-        for attr in ("data-id", "data-comment-id"):
-            val = element.get(attr)
-            if val and str(val).isdigit():
-                return int(val)
-
-        # 2. Проверяем атрибут id (например, 'post-105' или 'comment_42')
-        elem_id = element.get("id")
-        if elem_id:
-            # Ищем последовательность цифр
-            digits = re.findall(r"\d+", str(elem_id))
-            if digits:
-                return int(digits[0])
-
-        # 3. Проверяем наличие дочерних ссылок или элементов с ID
-        id_node = element.select_one(".comment-id, .post-id, a[data-id]")
-        if id_node:
-            val = id_node.get("data-id") or id_node.get_text(strip=True)
-            digits = re.findall(r"\d+", str(val))
-            if digits:
-                return int(digits[0])
-
-        return None
-
-    def _extract_author(self, element) -> Optional[str]:
-        """Вспомогательный метод для извлечения имени автора."""
-        author_node = element.select_one(
-            ".author, .author-name, .username, .user-nickname, .user-name, [itemprop='author']"
-        )
-        if author_node:
-            name = author_node.get_text(strip=True)
-            if name:
-                return name[:DatabaseRepository.MAX_NAME_LENGTH]
-        return None
-
-    def _extract_message(self, element) -> Optional[str]:
-        """Вспомогательный метод для извлечения содержимого сообщения."""
-        message_node = element.select_one(
-            ".comment-text, .post-message, .message-body, .post-content, .text"
-        )
-        if message_node:
-            # Извлекаем внутреннее HTML-содержимое поста
-            inner_html = "".join(str(child) for child in message_node.children).strip()
-            if not inner_html:
-                inner_html = message_node.get_text(strip=True)
-
-            if inner_html:
-                return inner_html[:DatabaseRepository.MAX_MESSAGE_LENGTH]
-        return None
-
     def parse_page(self, url: str) -> List[Dict[str, Any]]:
         """
-        Загружает страницу по URL и извлекает все найденные комментарии.
-
-        :param url: URL-адрес темы форума.
-        :return: Список извлеченных комментариев.
+        Связующий метод: скачивает HTML по ссылке и парсит комментарии.
         """
         html = self.fetch_page(url)
         return self.parse_html(html)
@@ -164,12 +97,7 @@ class ForumParser:
         ignore_duplicates: bool = True
     ) -> int:
         """
-        Сохраняет спарсенные данные в базу данных через репозиторий.
-
-        :param parsed_data: Список словарей с комментариями.
-        :param repository: Экземпляр DatabaseRepository.
-        :param ignore_duplicates: Пропускать дубликаты ID (True) или выбрасывать ошибку (False).
-        :return: Количество успешно сохраненных комментариев.
+        3. Сохранение полученных комментариев в базу данных SQLite.
         """
         saved_count = 0
         for item in parsed_data:
@@ -183,6 +111,5 @@ class ForumParser:
             except sqlite3.IntegrityError:
                 if not ignore_duplicates:
                     raise
-                # При ignore_duplicates=True пропускаем уже существующие записи
                 continue
         return saved_count

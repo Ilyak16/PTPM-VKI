@@ -1,48 +1,45 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Тестовый форум программистов</title>
+    <meta charset="windows-1251">
+    <title>4PDA - Обсуждение ColorOS 17</title>
 </head>
 <body>
-    <div class="forum-topic">
-        <h1>Обсуждение лабораторной работы по парсингу</h1>
-        
-        <!-- Сообщение 1: через data-id -->
-        <div class="post" data-id="101" id="post-101">
-            <div class="author-name">AlexDev</div>
-            <div class="post-message">Всем привет! Кто уже настроил <b>BeautifulSoup</b> и SQLite?</div>
+    <div id="comments">
+        <!-- 4PDA Комментарий 1 -->
+        <div id="comment-101">
+            <span class="nickname">AlexDev</span>
+            <div class="content">Всем привет! Кто уже обновился на <b>ColorOS 17</b>?</div>
         </div>
 
-        <!-- Сообщение 2: через id с префиксом -->
-        <article class="comment" id="comment-102">
-            <span class="user-nickname">Coder99</span>
-            <div class="comment-text"><p>Я сделал репозиторий через <i>:memory:</i>, тесты проходят отлично!</p></div>
-        </article>
-
-        <!-- Сообщение 3: через data-comment-id -->
-        <div class="message-item" data-comment-id="103">
-            <span class="author">PythonLover</span>
-            <div class="message-body">Не забудьте добавить <a href="/rules">User-Agent</a> в заголовки запроса!</div>
+        <!-- 4PDA Комментарий 2 -->
+        <div id="comment-102">
+            <span class="nickname">Coder99</span>
+            <div class="content">На OnePlus 12 прилетело сегодня утром, полет отличный!</div>
         </div>
 
-        <!-- Сообщение 4: от того же автора AlexDev для проверки поиска по автору -->
-        <div class="post" data-id="104">
-            <div class="author-name">AlexDev</div>
-            <div class="post-message">Спасибо за совет, всё заработало с первого раза.</div>
+        <!-- 4PDA Комментарий 3 -->
+        <div id="comment-103">
+            <span class="nickname">PythonLover</span>
+            <div class="content">А для realme GT 6 когда выйдет? Жду с нетерпением.</div>
         </div>
 
-        <!-- Некорректный блок без автора (должен быть пропущен) -->
-        <div class="post" data-id="999">
-            <div class="post-message">Сообщение без автора</div>
+        <!-- 4PDA Комментарий 4 (от того же AlexDev для проверки поиска по имени) -->
+        <div id="comment-104">
+            <span class="nickname">AlexDev</span>
+            <div class="content">Для realme обещали до конца месяца.</div>
         </div>
 
-        <!-- Некорректный блок без ID (должен быть пропущен) -->
-        <div class="post">
-            <div class="author-name">GhostUser</div>
-            <div class="post-message">Призрачное сообщение без ID</div>
+        <!-- Блок без никнейма (должен игнорироваться) -->
+        <div id="comment-999">
+            <div class="content">Сообщение без автора</div>
+        </div>
+
+        <!-- Блок без ID (должен игнорироваться) -->
+        <div>
+            <span class="nickname">GhostUser</span>
+            <div class="content">Призрачное сообщение</div>
         </div>
     </div>
 </body>
 </html>
-

@@ -35,25 +35,25 @@ class TestForumParser(unittest.TestCase):
         # В фикстуре ровно 4 валидных сообщения (невалидные блоки без ID или автора отсеиваются)
         self.assertEqual(len(data), 4)
 
-        # Проверяем первое сообщение (data-id=101)
+        # Проверяем первое сообщение (id="comment-101")
         self.assertEqual(data[0]["id"], 101)
         self.assertEqual(data[0]["name"], "AlexDev")
-        self.assertIn("<b>BeautifulSoup</b>", data[0]["message"])
+        self.assertIn("<b>ColorOS 17</b>", data[0]["message"])
 
         # Проверяем второе сообщение (id="comment-102")
         self.assertEqual(data[1]["id"], 102)
         self.assertEqual(data[1]["name"], "Coder99")
-        self.assertIn("<i>:memory:</i>", data[1]["message"])
+        self.assertIn("OnePlus 12", data[1]["message"])
 
-        # Проверяем третье сообщение (data-comment-id=103)
+        # Проверяем третье сообщение (id="comment-103")
         self.assertEqual(data[2]["id"], 103)
         self.assertEqual(data[2]["name"], "PythonLover")
-        self.assertIn("User-Agent", data[2]["message"])
+        self.assertIn("realme GT 6", data[2]["message"])
 
-        # Проверяем четвертое сообщение (от AlexDev, id=104)
+        # Проверяем четвертое сообщение (от AlexDev, id="comment-104")
         self.assertEqual(data[3]["id"], 104)
         self.assertEqual(data[3]["name"], "AlexDev")
-        self.assertEqual(data[3]["message"], "Спасибо за совет, всё заработало с первого раза.")
+        self.assertEqual(data[3]["message"], "Для realme обещали до конца месяца.")
 
     def test_parse_html_empty_or_whitespace_returns_empty_list(self):
         """Тест 2: Разбор пустой строки или HTML без постов возвращает пустой список."""
