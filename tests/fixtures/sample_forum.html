@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тестовый форум программистов</title>
+</head>
+<body>
+    <div class="forum-topic">
+        <h1>Обсуждение лабораторной работы по парсингу</h1>
+        
+        <!-- Сообщение 1: через data-id -->
+        <div class="post" data-id="101" id="post-101">
+            <div class="author-name">AlexDev</div>
+            <div class="post-message">Всем привет! Кто уже настроил <b>BeautifulSoup</b> и SQLite?</div>
+        </div>
+
+        <!-- Сообщение 2: через id с префиксом -->
+        <article class="comment" id="comment-102">
+            <span class="user-nickname">Coder99</span>
+            <div class="comment-text"><p>Я сделал репозиторий через <i>:memory:</i>, тесты проходят отлично!</p></div>
+        </article>
+
+        <!-- Сообщение 3: через data-comment-id -->
+        <div class="message-item" data-comment-id="103">
+            <span class="author">PythonLover</span>
+            <div class="message-body">Не забудьте добавить <a href="/rules">User-Agent</a> в заголовки запроса!</div>
+        </div>
+
+        <!-- Сообщение 4: от того же автора AlexDev для проверки поиска по автору -->
+        <div class="post" data-id="104">
+            <div class="author-name">AlexDev</div>
+            <div class="post-message">Спасибо за совет, всё заработало с первого раза.</div>
+        </div>
+
+        <!-- Некорректный блок без автора (должен быть пропущен) -->
+        <div class="post" data-id="999">
+            <div class="post-message">Сообщение без автора</div>
+        </div>
+
+        <!-- Некорректный блок без ID (должен быть пропущен) -->
+        <div class="post">
+            <div class="author-name">GhostUser</div>
+            <div class="post-message">Призрачное сообщение без ID</div>
+        </div>
+    </div>
+</body>
+</html>
+
