@@ -4,29 +4,16 @@ from src.database import DatabaseRepository
 
 
 class TestDatabaseRepository(unittest.TestCase):
-    """
-    Набор тестов для проверки функционала DatabaseRepository.
-    Покрывает позитивные и негативные сценарии для всех методов репозитория.
-    """
-
     def setUp(self):
-        """Инициализация изолированной базы данных в оперативной памяти перед каждым тестом."""
         self.repo = DatabaseRepository(":memory:")
 
     def tearDown(self):
-        """Закрытие подключения к базе данных после каждого теста."""
         self.repo.close()
 
-    # ==========================================
-    # Тесты для метода: add
-    # ==========================================
-
     def test_add_success(self):
-        """Тест 1 (add): Успешное добавление корректной записи."""
         result = self.repo.add(1, "ivan_dev", "Привет, мир!")
         self.assertTrue(result)
 
-        # Проверяем, что запись действительно появилась в БД
         record = self.repo.get_by_id(1)
         self.assertIsNotNone(record)
         self.assertEqual(record["id"], 1)
@@ -34,25 +21,21 @@ class TestDatabaseRepository(unittest.TestCase):
         self.assertEqual(record["message"], "Привет, мир!")
 
     def test_add_duplicate_id_raises_integrity_error(self):
-        """Тест 2 (add): Попытка добавить запись с уже существующим ID вызывает исключение."""
         self.repo.add(10, "alice", "Первое сообщение")
         with self.assertRaises(sqlite3.IntegrityError):
             self.repo.add(10, "bob", "Второе сообщение с тем же ID")
 
     def test_add_name_too_long_raises_value_error(self):
-        """Тест 3 (add): Превышение максимальной длины имени (> 256) вызывает ValueError."""
         long_name = "a" * (DatabaseRepository.MAX_NAME_LENGTH + 1)
         with self.assertRaises(ValueError):
             self.repo.add(2, long_name, "Валидное сообщение")
 
     def test_add_message_too_long_raises_value_error(self):
-        """Тест 4 (add): Превышение максимальной длины сообщения (> 8096) вызывает ValueError."""
         long_message = "x" * (DatabaseRepository.MAX_MESSAGE_LENGTH + 1)
         with self.assertRaises(ValueError):
             self.repo.add(3, "valid_user", long_message)
 
     def test_add_invalid_types_raise_type_error(self):
-        """Тест 5 (add): Передача некорректных типов данных вызывает TypeError."""
         # ID не целое число
         with self.assertRaises(TypeError):
             self.repo.add("not_an_int", "user", "message")  # type: ignore
