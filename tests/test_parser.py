@@ -7,12 +7,6 @@ from src.parser import ForumParser
 
 
 class TestForumParser(unittest.TestCase):
-    """
-    Тесты для веб-парсера ForumParser.
-    Используют локальную HTML-фикстуру и моки для сетевых вызовов,
-    обеспечивая полную независимость от интернета.
-    """
-
     @classmethod
     def setUpClass(cls):
         """Загрузка HTML-слепка страницы форума из фикстуры."""
@@ -60,9 +54,6 @@ class TestForumParser(unittest.TestCase):
         self.assertEqual(self.parser.parse_html(""), [])
         self.assertEqual(self.parser.parse_html("   \n\t  "), [])
         self.assertEqual(self.parser.parse_html("<html><body><div>Нет постов</div></body></html>"), [])
-
-    # ==========================================
-    # Тест-кейсы сохранения данных в репозиторий
     # ==========================================
 
     def test_save_to_db_success(self):
@@ -103,8 +94,6 @@ class TestForumParser(unittest.TestCase):
 
         repo.close()
 
-    # ==========================================
-    # Тест-кейс для сетевого метода с использованием Mock
     # ==========================================
 
     @patch("requests.get")
