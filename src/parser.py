@@ -1,6 +1,6 @@
 import re
 import sqlite3
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import requests
 from bs4 import BeautifulSoup
 from src.database import DatabaseRepository
@@ -22,7 +22,7 @@ class ForumParser:
         response = requests.get(url, headers=self.headers, timeout=self.timeout)
         response.raise_for_status()
         
-        # 4PDA использует кодировку windows-1251
+        # 4PDA windows-1251
         if response.encoding and response.encoding.lower() in ("iso-8859-1", "utf-8"):
             response.encoding = response.apparent_encoding or "windows-1251"
             
